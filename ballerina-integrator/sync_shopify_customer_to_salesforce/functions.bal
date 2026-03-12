@@ -111,6 +111,12 @@ public function createOrUpdateSalesforceContact(shopify:CustomerEvent customerEv
                 return updateResult;
             }
             
+            // Add Shopify tag to contact
+            error? tagResult = addShopifyTagToContact(existingContactId);
+            if tagResult is error {
+                log:printWarn("Failed to tag contact, but contact was updated", 'error = tagResult);
+            }
+            
             log:printInfo("Successfully updated Salesforce contact", 
                 contactId = existingContactId,
                 accountId = accountId ?: "None",
@@ -130,6 +136,12 @@ public function createOrUpdateSalesforceContact(shopify:CustomerEvent customerEv
     salesforce:CreationResponse response = check salesforceClient->create(sObjectName = "Contact", sObject = contact);
     
     if response.success {
+        // Add Shopify tag to contact
+        error? tagResult = addShopifyTagToContact(response.id);
+        if tagResult is error {
+            log:printWarn("Failed to tag contact, but contact was created", 'error = tagResult);
+        }
+        
         log:printInfo("Successfully created Salesforce contact", 
             contactId = response.id, 
             accountId = accountId ?: "None",
