@@ -9,7 +9,6 @@ public function mapShopifyCustomerToSalesforceContact(
     string? firstName = customerEvent?.first_name;
     string? lastName = customerEvent?.last_name;
     string? email = customerEvent?.email;
-    int? customerId = customerEvent?.id;
     string? phone = customerEvent?.phone;
     
     // Initialize contact with basic fields
@@ -21,12 +20,6 @@ public function mapShopifyCustomerToSalesforceContact(
         AccountId: accountId,
         LeadSource: defaultLeadSource
     };
-    
-    // Only include OwnerId if it's provided and not empty
-    string? ownerId = defaultOwnerId;
-    if ownerId is string && ownerId.trim() != "" {
-        contact.OwnerId = ownerId;
-    }
     
     // Convert to JSON to access nested fields
     json customerJson = customerEvent.toJson();
