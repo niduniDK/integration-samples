@@ -53,6 +53,11 @@ public type SalesforceContact record {
     
     // Dates
     string Birthdate?;
+    
+    // Shopify custom fields
+    boolean Shopify_Customer__c?;
+    int Shopify_Orders_Count__c?;
+    decimal Shopify_Total_Spent__c?;
 };
 
 // Salesforce Account record

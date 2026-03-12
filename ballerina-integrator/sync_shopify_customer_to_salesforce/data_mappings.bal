@@ -18,8 +18,32 @@ public function mapShopifyCustomerToSalesforceContact(
         Email: email,
         Phone: phone,
         AccountId: accountId,
-        LeadSource: defaultLeadSource
+        LeadSource: defaultLeadSource,
+        Shopify_Customer__c: true
     };
+    
+    // Set default record type and owner if configured
+    if defaultRecordTypeId is string {
+        contact.RecordTypeId = defaultRecordTypeId;
+    }
+    
+    if defaultOwnerId is string {
+        contact.OwnerId = defaultOwnerId;
+    }
+    
+    // Map order statistics to custom fields
+    int? ordersCount = customerEvent?.orders_count;
+    if ordersCount is int {
+        contact.Shopify_Orders_Count__c = ordersCount;
+    }
+    
+    string? totalSpent = customerEvent?.total_spent;
+    if totalSpent is string && totalSpent.trim() != "" {
+        decimal|error totalSpentDecimal = decimal:fromString(totalSpent);
+        if totalSpentDecimal is decimal {
+            contact.Shopify_Total_Spent__c = totalSpentDecimal;
+        }
+    }
     
     // Convert to JSON to access nested fields
     json customerJson = customerEvent.toJson();
@@ -219,7 +243,16 @@ public function extractDomainFromEmail(string email) returns string? {
 
 // Extract company name from customer event
 public function extractCompanyName(shopify:CustomerEvent customerEvent) returns string? {
-    // Company information may be in tags or note fields
-    // This is a placeholder - adjust based on actual Shopify data structure
+    json customerJson = customerEvent.toJson();
+    
+    // Extract company from default address
+    json|error defaultAddressJson = customerJson.default_address;
+    if defaultAddressJson is json && defaultAddressJson != () {
+        json|error companyJson = defaultAddressJson.company;
+        if companyJson is string && companyJson.trim() != "" {
+            return companyJson;
+        }
+    }
+    
     return ();
 }
