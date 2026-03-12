@@ -13,7 +13,7 @@ configurable string salesforceRefreshUrl = "https://login.salesforce.com/service
 // Salesforce default values
 configurable string defaultLeadSource = "Shopify";
 configurable string? defaultRecordTypeId = ();
-configurable string? defaultOwnerId = ();
+configurable string? ownerIdDefault = ();
 configurable "company"|"domain"|"none" accountAssociationRule = "company";
 configurable boolean enableDuplicateCheck = true;
 

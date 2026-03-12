@@ -28,8 +28,8 @@ public function mapShopifyCustomerToSalesforceContact(
         contact.RecordTypeId = defaultRecordTypeId;
     }
     
-    if defaultOwnerId is string {
-        contact.OwnerId = defaultOwnerId;
+    if ownerIdDefault is string {
+        contact.OwnerId = ownerIdDefault;
     }
     
     // Convert to JSON to access nested fields
