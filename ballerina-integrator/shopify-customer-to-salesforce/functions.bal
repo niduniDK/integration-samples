@@ -6,7 +6,12 @@ import ballerinax/trigger.shopify;
 // Escape single quotes for SOQL injection prevention
 function escapeSoqlString(string input) returns string {
     regexp:RegExp singleQuotePattern = re `'`;
-    return singleQuotePattern.replaceAll(input, "\\'");
+    regexp:RegExp underscorePattern = re `_`;
+    regexp:RegExp percentPattern = re `%`;
+    string escaped = singleQuotePattern.replaceAll(input, "\\'");
+    escaped = underscorePattern.replaceAll(escaped, "\\_");
+    escaped = percentPattern.replaceAll(escaped, "\\%");
+    return escaped;
 }
 
 // Check if contact exists by email (duplicate check)
@@ -27,7 +32,7 @@ public function findContactByEmail(string email) returns ContactQueryResult?|err
 // Find or create account based on company name or email domain
 public function findOrCreateAccount(shopify:CustomerEvent customerEvent) returns string?|error {
     // Check if account association is disabled
-    if salesforceConfig.accountAssociationRule == "none" {
+    if salesforceConfig.accountAssociationRule == NONE {
         return ();
     }
     
@@ -35,7 +40,7 @@ public function findOrCreateAccount(shopify:CustomerEvent customerEvent) returns
     string? email = customerEvent?.email;
     
     // Try to find account by company name
-    if (salesforceConfig.accountAssociationRule == "company" || salesforceConfig.accountAssociationRule == "domain") && companyName is string && companyName.trim() != "" {
+    if (salesforceConfig.accountAssociationRule == COMPANY || salesforceConfig.accountAssociationRule == DOMAIN) && companyName is string && companyName.trim() != "" {
         string escapedCompanyName = escapeSoqlString(companyName);
         string soqlQuery = string `SELECT Id, Name, Website FROM Account WHERE Name = '${escapedCompanyName}' LIMIT 1`;
         stream<AccountQueryResult, error?> resultStream = check salesforceClient->query(soql = soqlQuery);
@@ -49,7 +54,7 @@ public function findOrCreateAccount(shopify:CustomerEvent customerEvent) returns
         }
         
         // Create new account with company name only if rule is company
-        if salesforceConfig.accountAssociationRule == "company" {
+        if salesforceConfig.accountAssociationRule == COMPANY {
             SalesforceAccount newAccount = {
                 Name: companyName,
                 Description: "Created from Shopify customer"
@@ -61,11 +66,16 @@ public function findOrCreateAccount(shopify:CustomerEvent customerEvent) returns
                 log:printInfo("Created new account", accountId = accountResponse.id);
                 return accountResponse.id;
             }
+            log:printError("Failed to create Salesforce account",
+                company = companyName,
+                errors = accountResponse.errors
+            );
         }
+        
     }
     
     // Try to find account by email domain
-    if salesforceConfig.accountAssociationRule == "domain" && email is string {
+    if salesforceConfig.accountAssociationRule == DOMAIN && email is string {
         string? domain = extractDomainFromEmail(email);
         if domain is string {
             string escapedDomain = escapeSoqlString(domain);
@@ -115,7 +125,7 @@ public function createOrUpdateSalesforceContact(shopify:CustomerEvent customerEv
             // Add Shopify tag to contact
             error? tagResult = addShopifyTagToContact(existingContactId);
             if tagResult is error {
-                log:printWarn("Failed to tag contact, but contact was updated", 'error = tagResult);
+                log:printError("Failed to tag contact, but contact was updated", 'error = tagResult);
             }
             
             log:printInfo("Successfully updated Salesforce contact", 

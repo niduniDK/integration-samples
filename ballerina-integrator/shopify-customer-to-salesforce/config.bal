@@ -3,6 +3,12 @@ public type ShopifyConfig record {|
     string shopifySecret;
 |};
 
+public enum AccountAssociationRule {
+    COMPANY = "company",
+    DOMAIN = "domain",
+    NONE = "none"
+}
+
 public type SalesforceConfig record {|
     // Salesforce OAuth2 configuration
     string salesforceBaseUrl;
@@ -11,7 +17,7 @@ public type SalesforceConfig record {|
     string salesforceRefreshToken;
     string salesforceRefreshUrl = "https://login.salesforce.com/services/oauth2/token";
 
-    "company"|"domain"|"none" accountAssociationRule = "company";
+    AccountAssociationRule accountAssociationRule = COMPANY;
 |};
 
 configurable ShopifyConfig shopifyConfig = ?;
